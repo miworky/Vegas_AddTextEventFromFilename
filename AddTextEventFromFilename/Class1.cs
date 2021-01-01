@@ -106,7 +106,11 @@ namespace vegastest1
 
                 Media media = Media.CreateInstance(vegas.Project, generator);
 
-                OFXEffect ofxEffect = media.Generator.OFXEffect;
+                OFXEffect ofxEffect = GetOFXEffect(media);
+                if (ofxEffect == null)
+                {
+                    continue;
+                }
 
                 // テキストを変える
                 {
@@ -185,13 +189,35 @@ namespace vegastest1
             return sfd.FileName;
         }
 
+        private OFXEffect GetOFXEffect(Media media)
+        {
+            if (media == null)
+            {
+                return null;
+            }
+
+            Effect generator = media.Generator;
+            if (generator == null)
+            {
+                return null;
+            }
+
+            OFXEffect ofxEffect = generator.OFXEffect;
+            if (ofxEffect == null)
+            {
+                return null;
+            }
+
+            return ofxEffect;
+        }
+
         // ファイル名からテキストイベントのテキストに変換する
         // ファイル名は  2021-06-30T145043_comment.mp4 のようになっていることが前提
         // 以下のようなテキストが得られる：
         // 2021.06.30
         // comment
 
-       private  string ToComment(string name)
+        private  string ToComment(string name)
         {
             string filename = Path.GetFileNameWithoutExtension(name);
 
