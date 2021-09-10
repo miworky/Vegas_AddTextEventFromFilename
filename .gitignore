@@ -1,0 +1,5 @@
+.git/
+.vs/
+packages/
+AddTextEventFromFilename/bin/
+AddTextEventFromFilename/obj/
