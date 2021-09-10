@@ -56,7 +56,7 @@ AddTextEventFromFilename\bin\Releaseに成果物ができあがります。
 C:\ProgramData\VEGAS Pro\Script Menu
 に以下のファイルをコピーします：
 
-ReplaceMediaFiles\bin\Release\AddTextEventFromFilename.dll
+AddTextEventFromFilename\bin\Release\AddTextEventFromFilename.dll
 
 # ●実行方法
 
