@@ -81,6 +81,13 @@ namespace vegastest1
             }
 
 
+            PlugInNode generator = GetGeneratorTitlesAndText(vegas);
+            if (generator == null)
+            {
+                MessageBox.Show("Cannot get Titles & Text generator");
+                return;
+            }
+
             // ログ出力用のファイルを開く
             System.IO.StreamWriter writer = new System.IO.StreamWriter(saveFilePath, false, Encoding.GetEncoding("Shift_JIS"));
 
@@ -97,7 +104,6 @@ namespace vegastest1
                 Timecode timecode = new Timecode();
                 timecode.FrameCount = frameCountFilename.Item1;
 
-                PlugInNode generator = vegas.Generators.GetChildByName("VEGAS Titles & Text");
                 Media media = Media.CreateInstance(vegas.Project, generator);
 
                 OFXEffect ofxEffect = media.Generator.OFXEffect;
@@ -157,6 +163,12 @@ namespace vegastest1
             MessageBox.Show("終了しました。");
         }
 
+        // Titles & Text のジェネレータを取得する
+        private PlugInNode GetGeneratorTitlesAndText(Vegas vegas)
+        {
+            PlugInNode generator = vegas.Generators.GetChildByUniqueID("{Svfx:com.vegascreativesoftware:titlesandtext}"); //  Titles & Text
+            return generator;
+        }
 
         // ダイアログを開きファイルパスをユーザーに選択させる
         private string GetFilePath(string rootFilePath, string preFix)
