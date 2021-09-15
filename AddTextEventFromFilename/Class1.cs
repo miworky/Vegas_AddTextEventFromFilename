@@ -22,11 +22,6 @@ using System.Drawing;
 
 namespace vegastest1
 {
-    static class VegasConstants
-    {
-        public const string TextEventFileNamePrefix = "VEGAS タイトルおよびテキスト";
-    }
-
 
     public class EntryPoint
     {
@@ -40,6 +35,10 @@ namespace vegastest1
 
             // ダイアログを開き出力するログのファイルパスをユーザーに選択させる
             string saveFilePath = GetFilePath(vegas.Project.FilePath, "AddTextEventFromFilename");
+            if (saveFilePath.Length == 0)
+            {
+                return;
+            }
 
             // タイムライン上にある Video トラックの静止画・動画のファイル名を全部集める
             List<Tuple<long, string>> fileNames = new List<Tuple<long, string>>();
@@ -68,7 +67,8 @@ namespace vegastest1
                         continue;
                     }
 
-                    if (filepath.StartsWith(VegasConstants.TextEventFileNamePrefix, StringComparison.OrdinalIgnoreCase))
+                    string planeText = GetPlaneTextFromMedia(take.Media);
+                    if (planeText.Length != 0)
                     {
                         // テキストイベントは無視
                         continue;
@@ -210,6 +210,42 @@ namespace vegastest1
 
             return ofxEffect;
         }
+
+        private string GetPlaneTextFromMedia(Media media)
+        {
+            OFXEffect ofxEffect = GetOFXEffect(media);
+            if (ofxEffect == null)
+            {
+                return "";
+            }
+
+            string planeText = GetPlaneTextFromTextEvent(ofxEffect);
+            if (planeText.Length == 0)
+            {
+                return "";
+            }
+
+            return planeText;
+        }
+
+        private string GetPlaneTextFromTextEvent(OFXEffect ofxEffect)
+        {
+            OFXStringParameter textParam = ofxEffect.FindParameterByName("Text") as OFXStringParameter;
+            if (textParam == null)
+            {
+                // TextEvent でなければ無視
+                return "";
+            }
+
+            string rtfData = textParam.Value;   // rtf形式のテキスト
+
+            RichTextBox richtextBox = new RichTextBox();
+            richtextBox.Rtf = rtfData;
+
+            string planeText = richtextBox.Text;
+            return planeText;
+        }
+
 
         // ファイル名からテキストイベントのテキストに変換する
         // ファイル名は  2021-06-30T145043_comment.mp4 のようになっていることが前提
