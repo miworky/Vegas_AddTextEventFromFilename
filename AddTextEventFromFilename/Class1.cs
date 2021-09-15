@@ -228,11 +228,11 @@ namespace vegastest1
                 string rtfData = textParam.Value;   // デフォルトで入っているテキスト
 
                 RichTextBox richtextBox = new RichTextBox();
+                FontFamily fontFamily = richtextBox.SelectionFont.FontFamily;
                 richtextBox.Rtf = rtfData;
                 richtextBox.Text = newText;
                 richtextBox.SelectAll();    // 全テキストが対象
 
-                FontFamily fontFamily = richtextBox.SelectionFont.FontFamily;
                 richtextBox.SelectionFont = new System.Drawing.Font(fontFamily, fontSize);    // フォント変更
 
                 textParam.Value = richtextBox.Rtf;
