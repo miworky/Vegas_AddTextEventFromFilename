@@ -67,8 +67,7 @@ namespace vegastest1
                         continue;
                     }
 
-                    string planeText = GetPlaneTextFromMedia(take.Media);
-                    if (planeText.Length != 0)
+                    if (hasTextEvent(take.Media))
                     {
                         // テキストイベントは無視
                         continue;
@@ -81,6 +80,7 @@ namespace vegastest1
             }
 
 
+            // Titles & Text の Generator を取得する
             PlugInNode generator = GetGeneratorTitlesAndText(vegas);
             if (generator == null)
             {
@@ -94,23 +94,33 @@ namespace vegastest1
 
             // 抽出したファイル名を、最初のトラックの同時刻に追加する
             Timecode textFadeLength = Timecode.FromString("00:00:01;00");   // 追加するテキストのフェード時間
-            VideoTrack textVideoTrack = (VideoTrack)vegas.Project.Tracks[0];    // テキストを追加するビデオトラック（先頭のトラックに追加する）
+            VideoTrack textVideoTrack = vegas.Project.Tracks[0] as VideoTrack;    // テキストを追加するビデオトラック（先頭のトラックに追加する）
+            if (textVideoTrack == null)
+            {
+                return;
+            }
+
             long textEventOffsetMs = 1000;  // 追加するテキストは、動画や静止画よりも少し遅らせて追加する。遅らせる時間を ms で指定する
             Timecode textLength = Timecode.FromString("00:00:05;00");  // テキストの表示時間。固定時間としているが、動画や静止画がこれより短いとテキストが正しく表示されないので、動画や静止画の長さをチェックする必要がある
 
+            // ファイル名からテキストイベントを作成する
             foreach (var frameCountFilename in fileNames)
             {
                 string name = frameCountFilename.Item2;
-                Timecode timecode = new Timecode();
-                timecode.FrameCount = frameCountFilename.Item1;
+                Timecode timecodeStart = new Timecode();
+                timecodeStart.FrameCount = frameCountFilename.Item1;
 
+                // TextEvent を表す新しい Media を生成する
                 Media media = Media.CreateInstance(vegas.Project, generator);
 
+                // Media の Effect を取得する
                 OFXEffect ofxEffect = GetOFXEffect(media);
                 if (ofxEffect == null)
                 {
                     continue;
                 }
+
+                // 取得した Effect のパラメータを変更して、望むテロップにする
 
                 // テキストを変える
                 {
@@ -143,9 +153,8 @@ namespace vegastest1
 
                 ofxEffect.AllParametersChanged();
 
-
-                Timecode textStartTimecode = timecode + Timecode.FromMilliseconds(textEventOffsetMs);
-
+                // テロップを入れたい位置に video Event を生成する
+                Timecode textStartTimecode = timecodeStart + Timecode.FromMilliseconds(textEventOffsetMs);
                 VideoEvent videoEvent = new VideoEvent(textStartTimecode, textLength);
 
                 // テキストをトラックに追加する
@@ -158,7 +167,7 @@ namespace vegastest1
                 videoEvent.FadeOut.Length = textFadeLength;
 
                 // ログに出力する
-                writer.WriteLine(timecode.ToString() + " " + ToComment(name).Replace('\n', ' '));
+                writer.WriteLine(timecodeStart.ToString() + " " + ToComment(name).Replace('\n', ' '));
             }
 
             writer.Close();
@@ -211,39 +220,22 @@ namespace vegastest1
             return ofxEffect;
         }
 
-        private string GetPlaneTextFromMedia(Media media)
+        private bool hasTextEvent(Media media)
         {
             OFXEffect ofxEffect = GetOFXEffect(media);
             if (ofxEffect == null)
             {
-                return "";
+                return false;
             }
 
-            string planeText = GetPlaneTextFromTextEvent(ofxEffect);
-            if (planeText.Length == 0)
-            {
-                return "";
-            }
-
-            return planeText;
-        }
-
-        private string GetPlaneTextFromTextEvent(OFXEffect ofxEffect)
-        {
             OFXStringParameter textParam = ofxEffect.FindParameterByName("Text") as OFXStringParameter;
             if (textParam == null)
             {
-                // TextEvent でなければ無視
-                return "";
+                // TextEvent ではない
+                return false;
             }
 
-            string rtfData = textParam.Value;   // rtf形式のテキスト
-
-            RichTextBox richtextBox = new RichTextBox();
-            richtextBox.Rtf = rtfData;
-
-            string planeText = richtextBox.Text;
-            return planeText;
+            return true;
         }
 
 
