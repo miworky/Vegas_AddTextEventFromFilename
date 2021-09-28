@@ -60,16 +60,10 @@ namespace vegastest1
                         continue;
                     }
 
-                    string filepath = take.Media.FilePath;
+                    string filepath = GetMediaFilePath(take.Media);
                     if (filepath.Length == 0)
                     {
                         // ファイルパスが正常に取れなければ無視
-                        continue;
-                    }
-
-                    if (hasTextEvent(take.Media))
-                    {
-                        // テキストイベントは無視
                         continue;
                     }
 
@@ -220,7 +214,33 @@ namespace vegastest1
             return ofxEffect;
         }
 
-        private bool hasTextEvent(Media media)
+        private string GetMediaFilePath(Media media)
+        {
+            if (media == null)
+            {
+                return "";
+            }
+
+            string filepath = media.FilePath;
+            if (filepath.Length == 0)
+            {
+                // ファイルパスが正常に取れなかった
+                return "";
+            }
+
+            // テキストイベントにもテキストの内容がファイルパスに入っている
+            // それはほしいものではないので（そこにファイルはないので）除外する
+            if (IsTextEvent(media))
+            {
+                // テキストイベントは無視
+                return "";
+            }
+
+            return filepath;
+        }
+
+        // media がテキストイベントであれば true
+        private bool IsTextEvent(Media media)
         {
             OFXEffect ofxEffect = GetOFXEffect(media);
             if (ofxEffect == null)
@@ -231,7 +251,7 @@ namespace vegastest1
             OFXStringParameter textParam = ofxEffect.FindParameterByName("Text") as OFXStringParameter;
             if (textParam == null)
             {
-                // TextEvent ではない
+                // テキストイベントではない
                 return false;
             }
 
