@@ -116,24 +116,38 @@ namespace vegastest1
 
                 // 取得した Effect のパラメータを変更して、望むテロップにする
 
+                long err = 0;
+
                 // テキストを変える
                 {
                     string newText = ToComment(filename); // ファイル名からコメントに変換する
                     float fontSize = 14;
-                    ChangeText(ofxEffect, newText, fontSize);
+                    err = ChangeText(ofxEffect, newText, fontSize);
+                    if (err != 0)
+                    {
+                        // エラーは無視
+                    }
                 }
 
                 // テキストの表示位置を変える
                 {
                     double x = 0.5;
                     double y = 0.1;
-                    ChangeLocation(ofxEffect, x, y);
+                    err = ChangeLocation(ofxEffect, x, y);
+                    if (err != 0)
+                    {
+                        // エラーは無視
+                    }
                 }
 
                 // アウトラインの幅を変える
                 {
                     double outlineWidth = 10.0;
-                    ChangeOutlineWidth(ofxEffect, outlineWidth);
+                    err = ChangeOutlineWidth(ofxEffect, outlineWidth);
+                    if (err != 0)
+                    {
+                        // エラーは無視
+                    }
                 }
 
                 // アウトラインの色を変える
@@ -142,7 +156,11 @@ namespace vegastest1
                     double g = 0.0;
                     double b = 0.0;
                     double a = 1.0;
-                    ChangeOutlineColor(ofxEffect, r, g, b, a);
+                    err = ChangeOutlineColor(ofxEffect, r, g, b, a);
+                    if (err != 0)
+                    {
+                        // エラーは無視
+                    }
                 }
 
                 ofxEffect.AllParametersChanged();
@@ -298,6 +316,11 @@ namespace vegastest1
         private long ChangeText(OFXEffect ofxEffect, string newText, float fontSize)
         {
             OFXStringParameter textParam = ofxEffect.FindParameterByName("Text") as OFXStringParameter;
+            if (textParam == null)
+            {
+                return -1;
+            }
+
             {
                 string rtfData = textParam.Value;   // デフォルトで入っているテキスト
 
@@ -319,6 +342,10 @@ namespace vegastest1
         private long ChangeLocation(OFXEffect ofxEffect, double x, double y)
         {
             OFXDouble2DParameter locationParam = ofxEffect.FindParameterByName("Location") as OFXDouble2DParameter;
+            if (locationParam == null)
+            {
+                return -1;
+            }
 
             OFXDouble2D location;
             location.X = x;
@@ -333,6 +360,11 @@ namespace vegastest1
         private long ChangeOutlineWidth(OFXEffect ofxEffect, double width)
         {
             OFXDoubleParameter outlineWidthParam = ofxEffect.FindParameterByName("OutlineWidth") as OFXDoubleParameter;
+            if (outlineWidthParam == null)
+            {
+                return -1;
+            }
+
             outlineWidthParam.Value = width;
 
             return 0;
@@ -342,6 +374,11 @@ namespace vegastest1
         private long ChangeOutlineColor(OFXEffect ofxEffect, double r, double g, double b, double a)
         {
             OFXRGBAParameter outlineColorParam = ofxEffect.FindParameterByName("OutlineColor") as OFXRGBAParameter;
+            if (outlineColorParam == null)
+            {
+                return -1;
+            }
+
             outlineColorParam.Value = new OFXColor(r, g, b, a);
   
             return 0;
