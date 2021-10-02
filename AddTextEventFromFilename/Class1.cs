@@ -41,7 +41,7 @@ namespace vegastest1
             }
 
             // タイムライン上にある Video トラックの静止画・動画のファイル名を全部集める
-            List<Tuple<long, string>> fileNames = new List<Tuple<long, string>>();
+            List<Tuple<long, string>> fileInfos = new List<Tuple<long, string>>();
             foreach (Track track in vegas.Project.Tracks)
             {
                 foreach (TrackEvent trackEvent in track.Events)
@@ -69,7 +69,7 @@ namespace vegastest1
 
                     // ファイルパスが見つかった
                     // このファイルが張り付けられているフレーム位置とファイルパスのペアを追加する
-                    fileNames.Add(Tuple.Create(trackEvent.Start.FrameCount, filepath));                    
+                    fileInfos.Add(Tuple.Create(trackEvent.Start.FrameCount, filepath));                    
                 }
             }
 
@@ -98,11 +98,11 @@ namespace vegastest1
             Timecode textLength = Timecode.FromString("00:00:05;00");  // テキストの表示時間。固定時間としているが、動画や静止画がこれより短いとテキストが正しく表示されないので、動画や静止画の長さをチェックする必要がある
 
             // ファイル名からテキストイベントを作成する
-            foreach (var frameCountFilename in fileNames)
+            foreach (var fileInfo in fileInfos)
             {
-                string name = frameCountFilename.Item2;
+                string filename = fileInfo.Item2;
                 Timecode timecodeStart = new Timecode();
-                timecodeStart.FrameCount = frameCountFilename.Item1;
+                timecodeStart.FrameCount = fileInfo.Item1;
 
                 // TextEvent を表す新しい Media を生成する
                 Media media = Media.CreateInstance(vegas.Project, generator);
@@ -118,7 +118,7 @@ namespace vegastest1
 
                 // テキストを変える
                 {
-                    string newText = ToComment(name); // ファイル名からコメントに変換する
+                    string newText = ToComment(filename); // ファイル名からコメントに変換する
                     float fontSize = 14;
                     ChangeText(ofxEffect, newText, fontSize);
                 }
@@ -161,7 +161,7 @@ namespace vegastest1
                 videoEvent.FadeOut.Length = textFadeLength;
 
                 // ログに出力する
-                writer.WriteLine(timecodeStart.ToString() + " " + ToComment(name).Replace('\n', ' '));
+                writer.WriteLine(timecodeStart.ToString() + " " + ToComment(filename).Replace('\n', ' '));
             }
 
             writer.Close();
