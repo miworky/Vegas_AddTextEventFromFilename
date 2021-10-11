@@ -1,4 +1,4 @@
-﻿/*   Vegas Pro 18.0 用のプラグイン
+﻿/*   Vegas Pro 19.0 用のスクリプト
  * 　　タイムライン上にある Video トラックの静止画・動画のファイル名を元に、テロップを自動生成する。
  * 　　静止画・動画のファイル名は「YYYY-MM-DDTHHmmSS_コメント」となっている必要がある。
  * 　　
@@ -100,7 +100,7 @@ namespace vegastest1
             // ファイル名からテキストイベントを作成する
             foreach (var fileInfo in fileInfos)
             {
-                string filename = fileInfo.Item2;
+                string filepath = fileInfo.Item2;
                 Timecode timecodeStart = new Timecode();
                 timecodeStart.FrameCount = fileInfo.Item1;
 
@@ -120,7 +120,7 @@ namespace vegastest1
 
                 // テキストを変える
                 {
-                    string newText = ToComment(filename); // ファイル名からコメントに変換する
+                    string newText = ToComment(filepath); // ファイル名からコメントに変換する
                     float fontSize = 14;
                     err = ChangeText(ofxEffect, newText, fontSize);
                     if (err != 0)
@@ -179,7 +179,7 @@ namespace vegastest1
                 videoEvent.FadeOut.Length = textFadeLength;
 
                 // ログに出力する
-                writer.WriteLine(timecodeStart.ToString() + " " + ToComment(filename).Replace('\n', ' '));
+                writer.WriteLine(timecodeStart.ToString() + " " + ToComment(filepath).Replace('\n', ' '));
             }
 
             writer.Close();
@@ -277,15 +277,10 @@ namespace vegastest1
         }
 
 
-        // ファイル名からテキストイベントのテキストに変換する
-        // ファイル名は  2021-06-30T145043_comment.mp4 のようになっていることが前提
-        // 以下のようなテキストが得られる：
-        // 2021.06.30
-        // comment
-
-        private  string ToComment(string name)
+        // filepathから撮影日を取得する
+        private string GetDate(string filepath)
         {
-            string filename = Path.GetFileNameWithoutExtension(name);
+            string filename = Path.GetFileNameWithoutExtension(filepath);
 
             // filenameから撮影日を取得する
             var firstTIndex = filename.IndexOf('T');
@@ -297,6 +292,14 @@ namespace vegastest1
             string date_ = filename.Substring(0, firstTIndex);
             string date = date_.Replace('-', '.');
 
+            return date;
+        }
+
+        // filepathからコメントを取得する
+        private string GetComment(string filepath)
+        {
+            string filename = Path.GetFileNameWithoutExtension(filepath);
+
             // filenameからコメントを取得する
             var firstUnderbarIndex = filename.IndexOf('_');
             if (firstUnderbarIndex < 0)
@@ -305,6 +308,19 @@ namespace vegastest1
             }
 
             string comment = filename.Substring(firstUnderbarIndex + 1);
+
+            return comment;
+        }
+
+        // ファイル名からテキストイベントのテキストに変換する
+        // ファイル名は  2021-06-30T145043_comment.mp4 のようになっていることが前提
+        // 以下のようなテキストが得られる：
+        // 2021.06.30
+        // comment
+        private  string ToComment(string filepath)
+        {
+            string date = GetDate(filepath);
+            string comment = GetComment(filepath);
 
             // 撮影日とコメントを連結する
             string text = date + " \n" + comment;
