@@ -44,6 +44,8 @@ namespace vegastest1
             List<Tuple<long, string>> fileInfos = new List<Tuple<long, string>>();
             foreach (Track track in vegas.Project.Tracks)
             {
+                string oldComment = "";
+
                 foreach (TrackEvent trackEvent in track.Events)
                 {
                     if (!trackEvent.IsVideo())
@@ -68,6 +70,17 @@ namespace vegastest1
                     }
 
                     // ファイルパスが見つかった
+
+                    // 前回のコメントと同じなら無視する
+                    string comment = GetComment(filepath); // 今回のコメント
+                    if (comment == oldComment)
+                    {
+                        // 前回と同じコメントなので無視する
+                        continue;
+                    }
+
+                    oldComment = comment;
+
                     // このファイルが張り付けられているフレーム位置とファイルパスのペアを追加する
                     fileInfos.Add(Tuple.Create(trackEvent.Start.FrameCount, filepath));                    
                 }
