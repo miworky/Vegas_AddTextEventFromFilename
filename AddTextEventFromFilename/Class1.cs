@@ -11,7 +11,6 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using ScriptPortal.Vegas;
@@ -32,6 +31,18 @@ namespace vegastest1
                 // トラックがないときは何もしない
                 return;
             }
+
+            // パラメータを設定するダイアログを開く
+            Tuple<DialogResult, string, string, string> dialogResult = DoDialog(vegas);
+            DialogResult result = dialogResult.Item1;
+            if (result != DialogResult.OK)
+            {
+                return;
+            }
+
+            string textFadeLengthString = dialogResult.Item2;
+            string textLengthString = dialogResult.Item3;
+            string textFadeString = dialogResult.Item4;
 
             // ダイアログを開き出力するログのファイルパスをユーザーに選択させる
             string saveFilePath = GetFilePath(vegas.Project.FilePath, "AddTextEventFromFilename");
@@ -86,7 +97,6 @@ namespace vegastest1
                 }
             }
 
-
             // Titles & Text の Generator を取得する
             PlugInNode generator = GetGeneratorTitlesAndText(vegas);
             if (generator == null)
@@ -100,7 +110,7 @@ namespace vegastest1
 
 
             // 抽出したファイル名を、最初のトラックの同時刻に追加する
-            Timecode textFadeLength = Timecode.FromString("00:00:01;00");   // 追加するテキストのフェード時間
+            Timecode textFadeLength = Timecode.FromString(textFadeLengthString);   // 追加するテキストのフェード時間
             VideoTrack textVideoTrack = vegas.Project.Tracks[0] as VideoTrack;    // テキストを追加するビデオトラック（先頭のトラックに追加する）
             if (textVideoTrack == null)
             {
@@ -108,7 +118,13 @@ namespace vegastest1
             }
 
             long textEventOffsetMs = 1000;  // 追加するテキストは、動画や静止画よりも少し遅らせて追加する。遅らせる時間を ms で指定する
-            Timecode textLength = Timecode.FromString("00:00:05;00");  // テキストの表示時間。固定時間としているが、動画や静止画がこれより短いとテキストが正しく表示されないので、動画や静止画の長さをチェックする必要がある
+            if (!long.TryParse(textFadeString, out textEventOffsetMs))
+            {
+                MessageBox.Show("Cannot parse Text Offset");
+                return;
+            }
+
+            Timecode textLength = Timecode.FromString(textLengthString);  // テキストの表示時間。固定時間としているが、動画や静止画がこれより短いとテキストが正しく表示されないので、動画や静止画の長さをチェックする必要がある
 
             // ファイル名からテキストイベントを作成する
             foreach (var fileInfo in fileInfos)
@@ -199,6 +215,149 @@ namespace vegastest1
 
 
             MessageBox.Show("終了しました。");
+        }
+
+
+        private Tuple<DialogResult, string, string, string> DoDialog(Vegas vegas)
+        {
+            Form form = new Form();
+            form.SuspendLayout();
+            form.AutoScaleMode = AutoScaleMode.Font;
+            form.AutoScaleDimensions = new SizeF(6F, 13F);
+            form.FormBorderStyle = FormBorderStyle.FixedDialog;
+            form.StartPosition = FormStartPosition.CenterParent;
+            form.MaximizeBox = false;
+            form.MinimizeBox = false;
+            form.HelpButton = false;
+            form.ShowInTaskbar = false;
+            form.Text = "Add Text Event From Filename";
+            form.AutoSize = true;
+            form.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+
+            TableLayoutPanel layout = new TableLayoutPanel();
+            layout.AutoSize = true;
+            layout.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            layout.GrowStyle = TableLayoutPanelGrowStyle.AddRows;
+            layout.ColumnCount = 3;
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 140));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 180));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 80));
+            form.Controls.Add(layout);
+
+            {
+                Label label;
+
+                label = new Label();
+                label.Text = "Text Fade Length:";
+                label.AutoSize = false;
+                label.TextAlign = ContentAlignment.MiddleLeft;
+                label.Margin = new Padding(8, 8, 8, 4);
+                label.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+                layout.Controls.Add(label);
+                layout.SetColumnSpan(label, 3);
+            }
+
+            TextBox TextLFadeLengthBox = new TextBox();
+            {
+                TextLFadeLengthBox.Text = "00:00:01;00";
+
+                TextLFadeLengthBox.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+                TextLFadeLengthBox.Margin = new Padding(16, 8, 8, 4);
+                layout.Controls.Add(TextLFadeLengthBox);
+                layout.SetColumnSpan(TextLFadeLengthBox, 2);
+            }
+
+            {
+                Label label;
+
+                label = new Label();
+                label.Text = "Text Length:";
+                label.AutoSize = false;
+                label.TextAlign = ContentAlignment.MiddleLeft;
+                label.Margin = new Padding(8, 8, 8, 4);
+                label.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+                layout.Controls.Add(label);
+                layout.SetColumnSpan(label, 3);
+            }
+
+            TextBox TextLengthBox = new TextBox();
+            {
+                TextLengthBox.Text = "00:00:05;00";
+
+                TextLengthBox.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+                TextLengthBox.Margin = new Padding(16, 8, 8, 4);
+                layout.Controls.Add(TextLengthBox);
+                layout.SetColumnSpan(TextLengthBox, 2);
+            }
+
+            {
+                Label label;
+
+                label = new Label();
+                label.Text = "Text Offset (ms):";
+                label.AutoSize = false;
+                label.TextAlign = ContentAlignment.MiddleLeft;
+                label.Margin = new Padding(8, 8, 8, 4);
+                label.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+                layout.Controls.Add(label);
+                layout.SetColumnSpan(label, 3);
+            }
+
+            TextBox TextOffsetBox = new TextBox();
+            {
+                TextOffsetBox.Text = "1000";
+
+                TextOffsetBox.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+                TextOffsetBox.Margin = new Padding(16, 8, 8, 4);
+                layout.Controls.Add(TextOffsetBox);
+                layout.SetColumnSpan(TextOffsetBox, 2);
+            }
+
+            {
+                FlowLayoutPanel buttonPanel = new FlowLayoutPanel();
+                buttonPanel.FlowDirection = FlowDirection.RightToLeft;
+                buttonPanel.Size = Size.Empty;
+                buttonPanel.AutoSize = true;
+                buttonPanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+                buttonPanel.Margin = new Padding(8, 8, 8, 8);
+                buttonPanel.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+                layout.Controls.Add(buttonPanel);
+                layout.SetColumnSpan(buttonPanel, 3);
+
+                {
+                    Button cancelButton = new Button();
+                    cancelButton.Text = "Cancel";
+                    cancelButton.FlatStyle = FlatStyle.System;
+                    cancelButton.DialogResult = DialogResult.Cancel;
+                    buttonPanel.Controls.Add(cancelButton);
+                    form.CancelButton = cancelButton;
+                }
+
+                {
+                    Button okButton = new Button();
+
+                    okButton.Text = "OK";
+                    okButton.FlatStyle = FlatStyle.System;
+                    okButton.DialogResult = DialogResult.OK;
+                    buttonPanel.Controls.Add(okButton);
+                    form.AcceptButton = okButton;
+                }
+            }
+
+            form.ResumeLayout();
+
+            string textFadeLength = "";
+            string textLength = "";
+            string textOffset = "";
+            DialogResult result = form.ShowDialog(vegas.MainWindow);
+            if (DialogResult.OK == result)
+            {
+                textFadeLength = TextLFadeLengthBox.Text;
+                textLength = TextLengthBox.Text;
+                textOffset = TextOffsetBox.Text;
+            }
+
+            return Tuple.Create(result, textFadeLength, textLength, textOffset);
         }
 
         // Titles & Text のジェネレータを取得する
